@@ -51,6 +51,7 @@ func attackCmd() command {
 	fs.Var(&opts.laddr, "laddr", "Local IP address")
 	fs.BoolVar(&opts.keepalive, "keepalive", true, "Use persistent connections")
 	systemSpecificFlags(fs, opts)
+	fs.Int64Var(&opts.txRate, "tx-rate", vegeta.DefaultTxRate, "Request body upload throughput limit (byte/sec). [-1 = no limit]")
 
 	return command{fs, func(args []string) error {
 		fs.Parse(args)
@@ -88,6 +89,7 @@ type attackOpts struct {
 	laddr       localAddr
 	keepalive   bool
 	resolvers   csl
+	txRate      int64
 }
 
 // attack validates the attack arguments, sets up the
@@ -171,6 +173,7 @@ func attack(opts *attackOpts) (err error) {
 		vegeta.HTTP2(opts.http2),
 		vegeta.H2C(opts.h2c),
 		vegeta.MaxBody(opts.maxBody),
+		vegeta.TxRate(opts.txRate),
 	)
 
 	res := atk.Attack(tr, opts.rate, opts.duration, opts.name)
