@@ -16,6 +16,7 @@ import (
 
 	jlexer "github.com/mailru/easyjson/jlexer"
 	jwriter "github.com/mailru/easyjson/jwriter"
+	flowrate "github.com/mxk/go-flowrate/flowrate"
 )
 
 // Target is an HTTP request blueprint.
@@ -41,6 +42,20 @@ func (t *Target) Request() (*http.Request, error) {
 	}
 	if host := req.Header.Get("Host"); host != "" {
 		req.Host = host
+	}
+	return req, nil
+}
+
+// RequestWithTxRate creates a request with rate-limited body reader.
+func (t *Target) RequestWithTxRate(txRate int64) (*http.Request, error) {
+	req, err := t.Request()
+	if err != nil {
+		return nil, err
+	}
+
+	if txRate > 0 {
+		newReader := flowrate.NewReader(req.Body, txRate)
+		req.Body = newReader
 	}
 	return req, nil
 }

@@ -24,6 +24,7 @@ type Attacker struct {
 	redirects int
 	seqmu     sync.Mutex
 	seq       uint64
+	txRate    int64
 }
 
 const (
@@ -43,6 +44,9 @@ const (
 	DefaultMaxBody = int64(-1)
 	// NoFollow is the value when redirects are not followed but marked successful
 	NoFollow = -1
+	// DefaultTxRate is the default upload bandwidth limitation. Non-positive number
+	// resuls in no limitation.
+	DefaultTxRate = int64(-1)
 )
 
 var (
@@ -59,6 +63,7 @@ func NewAttacker(opts ...func(*Attacker)) *Attacker {
 		stopch:  make(chan struct{}),
 		workers: DefaultWorkers,
 		maxBody: DefaultMaxBody,
+		txRate:  DefaultTxRate,
 	}
 
 	a.dialer = &net.Dialer{
@@ -209,6 +214,12 @@ func Client(c *http.Client) func(*Attacker) {
 	return func(a *Attacker) { a.client = *c }
 }
 
+// TxRate returns a functional option that can specify upload bandwidth limitation.
+// The unit is in bytes per second. A non-positive number sets no limitation.
+func TxRate(rate int64) func(*Attacker) {
+	return func(a *Attacker) { a.txRate = rate }
+}
+
 // A Rate of hits during an Attack.
 type Rate struct {
 	Freq int           // Frequency (number of occurrences) per ...
@@ -301,7 +312,7 @@ func (a *Attacker) hit(tr Targeter, name string) *Result {
 		return &res
 	}
 
-	req, err := tgt.Request()
+	req, err := tgt.RequestWithTxRate(a.txRate)
 	if err != nil {
 		return &res
 	}
