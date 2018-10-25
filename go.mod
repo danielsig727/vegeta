@@ -21,6 +21,5 @@ require (
 	golang.org/x/text v0.3.0
 )
 
-replace github.com/tsenart/vegeta => github.com/danielsig727/vegeta vgo
 
-replace github.com/tsenart/vegeta/lib => github.com/danielsig727/vegeta/lib vgo
+replace github.com/tsenart/vegeta => github.com/danielsig727/vegeta vgo
